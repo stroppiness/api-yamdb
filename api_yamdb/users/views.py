@@ -10,7 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .permissions import (IsAdmin, IsAuthorOrModeratorOrAdmin)
 from .serializers import (GetUserSerializer, SignupSerializer, TokenSerializer,
-                          UpdateUserSerializer)
+                          PostUserSerializer, PatchUserSerializer)
 
 User = get_user_model()
 
@@ -68,7 +68,11 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         if self.action == 'list' or self.action == 'retrieve':
             return GetUserSerializer
 
-        return UpdateUserSerializer
+        if self.action == 'create':
+            return PostUserSerializer
+
+        if self.action == 'partial_update':
+            return PatchUserSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -84,7 +88,7 @@ class UserViewSet(viewsets.ModelViewSet):
         if self.action == 'list' or self.action == 'retrieve':
             return GetUserSerializer
 
-        return UpdateUserSerializer
+        return PostUserSerializer
 
 
 class TokenViewSet(viewsets.ViewSet):

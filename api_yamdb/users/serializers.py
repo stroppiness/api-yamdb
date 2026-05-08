@@ -40,11 +40,35 @@ class GetUserSerializer(serializers.ModelSerializer):
         )
 
 
-class UpdateUserSerializer(serializers.ModelSerializer):
+class PostUserSerializer(serializers.ModelSerializer):
     """
-    Сериализатор изменения пользовательских данных.
+    Сериализатор изменения пользовательских данных методом POST.
     """
     email = serializers.EmailField(required=True)
+
+    class Meta:
+        model = User
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role'
+        )
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                'Email уже зарегистрирован.'
+            )
+        return value
+
+
+class PatchUserSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор изменения пользовательских данных методом PATCH.
+    """
 
     class Meta:
         model = User
