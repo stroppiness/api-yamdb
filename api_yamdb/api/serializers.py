@@ -18,31 +18,30 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(read_only=True)
-    genre = GenreSerializer(many=True, read_only=True)
-    rating = serializers.IntegerField(read_only=True, default=None)
-    category_slug = serializers.SlugRelatedField(
+    category = serializers.SlugRelatedField(
         slug_field='slug',
-        queryset=Category.objects.all(),
-        write_only=True,
-        source='category'
+        queryset=Category.objects.all()
     )
-    genre_slugs = serializers.SlugRelatedField(
+    genre = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Genre.objects.all(),
-        many=True,
-        write_only=True,
-        source='genre'
+        many=True
     )
+    rating = serializers.IntegerField(read_only=True, default=None)
 
     class Meta:
         model = Title
         fields = (
             'id', 'name', 'year', 'rating',
-            'description', 'genre', 'category',
-            'category_slug', 'genre_slugs'
+            'description', 'genre', 'category'
         )
-        read_only_fields = ('id', 'rating')
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['category'] = CategorySerializer(instance.category).data
+        representation['genre'] = GenreSerializer(instance.genre.all(),
+                                                  many=True).data
+        return representation
 
     def validate_year(self, value):
         if value > date.today().year:

@@ -1,3 +1,4 @@
+from django.db.models import Avg
 from rest_framework import mixins, viewsets
 from rest_framework.filters import SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
@@ -46,8 +47,9 @@ class GenreViewSet(
 class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет для произведений без PUT."""
 
-    queryset = Title.objects.select_related(
-        'category').prefetch_related('genre')
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')
+    ).select_related('category').prefetch_related('genre')
     serializer_class = TitleSerializer
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
