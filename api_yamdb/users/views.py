@@ -2,12 +2,14 @@ import random
 
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
-from rest_framework import status, viewsets
+from django.shortcuts import get_object_or_404
+from rest_framework import status, viewsets, filters
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from .permissions import (IsAdmin, IsAuthorOrModeratorOrAdmin,
-                          ReadOnlyOrAuthenticated)
-from .serializers import (GetUserSerializer, SignupSerializer,
+from .permissions import (IsAdmin, IsAuthorOrModeratorOrAdmin)
+from .serializers import (GetUserSerializer, SignupSerializer, TokenSerializer,
                           UpdateUserSerializer)
 
 User = get_user_model()
@@ -16,15 +18,15 @@ User = get_user_model()
 class SelfRegistrationViewSet(viewsets.ViewSet):
     """
     Вьюсет для самостоятельной регистрации пользователя
-    с дальнейшей отправкой кода на почту.
+    с дальнейшей отправкой кода на почту. Для любой роли.
 
     Используется для эндпоинта /auth/signup/.
     """
     http_method_names = ['post']
+    permission_classes = [AllowAny]
 
     def create(self, request):
         serializer = SignupSerializer(data=request.data)
-        self.permission_classes = [ReadOnlyOrAuthenticated]
 
         if serializer.is_valid():
 
@@ -53,8 +55,13 @@ class SelfRegistrationViewSet(viewsets.ViewSet):
 
 
 class AdminUserViewSet(viewsets.ModelViewSet):
+    """
+    Вьюсет изменения данных о пользователях. Для админов.
+    """
     queryset = User.objects.all()
     permission_classes = [IsAdmin]
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('username',)
 
     def get_serializer_class(self):
 
@@ -65,6 +72,10 @@ class AdminUserViewSet(viewsets.ModelViewSet):
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    """
+    Вьюсет для получения данных о пользователях.
+    Для админов или модераторов.
+    """
     queryset = User.objects.all()
     permission_classes = [IsAuthorOrModeratorOrAdmin]
 
@@ -74,3 +85,36 @@ class UserViewSet(viewsets.ModelViewSet):
             return GetUserSerializer
 
         return UpdateUserSerializer
+
+
+class TokenViewSet(viewsets.ViewSet):
+    """
+    Вьюсет для генерации jwt-токена. Для любой роли.
+    """
+    permission_classes = [AllowAny]
+    http_method_names = ['post']
+
+    def create(self, request):
+        serializer = TokenSerializer(data=request.data)
+
+        if serializer.is_valid():
+
+            username = serializer.validated_data['username']
+            confirmation_code = serializer.validated_data['confirmation_code']
+
+            user = get_object_or_404(User, username=username)
+
+            if user.confirmation_code != confirmation_code:
+                return Response(
+                    serializer.errors,
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            refresh = RefreshToken.for_user(user)
+
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token)
+            })
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

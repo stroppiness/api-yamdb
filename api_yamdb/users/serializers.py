@@ -7,9 +7,8 @@ User = get_user_model()
 class SignupSerializer(serializers.ModelSerializer):
     """
     Сериализатор регистрации пользователя.
-
-    Используется для эндпоинта /auth/signup/.
     """
+    username = serializers.CharField(max_length=254, required=True)
     email = serializers.EmailField(required=True)
 
     class Meta:
@@ -23,13 +22,11 @@ class SignupSerializer(serializers.ModelSerializer):
             )
         return value
 
-    def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("Этот email уже занят")
-        return value
-
 
 class GetUserSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор получения данных о пользователях.
+    """
 
     class Meta:
         model = User
@@ -44,6 +41,9 @@ class GetUserSerializer(serializers.ModelSerializer):
 
 
 class UpdateUserSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор изменения пользовательских данных.
+    """
     email = serializers.EmailField(required=True)
 
     class Meta:
@@ -56,3 +56,15 @@ class UpdateUserSerializer(serializers.ModelSerializer):
             'bio',
             'role'
         )
+
+
+class TokenSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор получения токена.
+    """
+    username = serializers.CharField(required=True)
+    confirmation_code = serializers.CharField(required=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'confirmation_code')
