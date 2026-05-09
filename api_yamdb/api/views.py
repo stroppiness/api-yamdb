@@ -5,14 +5,14 @@ from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from permissions import IsAdminOrReadOnly, IsAuthorOrModeratorOrAdmin
+from .permissions import IsAdminOrReadOnly, IsAuthorOrModeratorOrAdmin
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Category, Genre, Review, Title
+from models.models import Category, Genre, Review, Title
 from .pagination import APIPagination
 from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, GetUserSerializer,

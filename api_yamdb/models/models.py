@@ -1,11 +1,9 @@
-from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from .constants import COMMENT_PREVIEW_LENGTH, REVIEW_PREVIEW_LENGTH
-
-User = get_user_model()
+from api.constants import COMMENT_PREVIEW_LENGTH, REVIEW_PREVIEW_LENGTH
 
 
 class CustomUser(AbstractUser):
@@ -115,7 +113,7 @@ class Review(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Произведение')
     text = models.TextField('Текст отзыва')
-    author = models.ForeignKey(User,
+    author = models.ForeignKey(settings.AUTH_USER_MODEL,
                                on_delete=models.CASCADE,
                                verbose_name='Автор отзыва')
     score = models.IntegerField(
@@ -148,7 +146,7 @@ class Comment(models.Model):
         verbose_name='Отзыв'
     )
     text = models.TextField('Текст комментария')
-    author = models.ForeignKey(User,
+    author = models.ForeignKey(settings.AUTH_USER_MODEL,
                                on_delete=models.CASCADE,
                                verbose_name='Автор комментария')
     pub_date = models.DateTimeField('Дата и время публикации комментария',
