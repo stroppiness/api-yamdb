@@ -4,9 +4,8 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
-from .permissions import (IsAdmin,
-                          IsAuthorOrModeratorOrAdmin)
+from django_filters.rest_framework import CharFilter, DjangoFilterBackend, FilterSet
+from .permissions import IsAdminOrReadOnly, IsAuthorOrModeratorOrAdmin
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -142,6 +141,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthorOrModeratorOrAdmin]
     pagination_class = APIPagination
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_title(self):
         """Возвращает произведение по title_id из URL."""
@@ -164,6 +164,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = [IsAuthorOrModeratorOrAdmin]
     pagination_class = APIPagination
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_review(self):
         """Возвращает отзыв по review_id и title_id из URL."""
@@ -197,7 +198,7 @@ class CategoryViewSet(
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-    permission_classes = (IsAuthorOrModeratorOrAdmin,)
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class GenreViewSet(
@@ -213,17 +214,27 @@ class GenreViewSet(
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-    permission_classes = (IsAdmin,)
+    permission_classes = (IsAdminOrReadOnly,)
+
+
+class TitleFilter(FilterSet):
+    genre = CharFilter(field_name='genre__slug')
+    category = CharFilter(field_name='category__slug')
+    name = CharFilter(field_name='name', lookup_expr='contains')
+    year = CharFilter(field_name='year')
+
+    class Meta:
+        model = Title
+        fields = ('genre', 'category', 'name', 'year')
 
 
 class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет для произведений без PUT."""
 
-    queryset = Title.objects.annotate(
-        rating=Avg('reviews__score')
-    ).select_related('category').prefetch_related('genre')
+    queryset = Title.objects.select_related(
+        'category').prefetch_related('genre')
     serializer_class = TitleSerializer
     permission_classes = (IsAdmin,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('category__slug', 'genre__slug', 'name', 'year')
+    filterset_class = TitleFilter
     http_method_names = ['get', 'post', 'patch', 'delete']
