@@ -1,14 +1,15 @@
 import random
-
+from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from .permissions import IsAdminOrReadOnly, IsAuthorOrModeratorOrAdmin
+from .permissions import (IsAdmin,
+                          IsAuthorOrModeratorOrAdmin)
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.filters import SearchFilter
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -18,7 +19,7 @@ from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, GetUserSerializer,
                           PatchUserSerializer, PostUserSerializer,
                           ReviewSerializer, SignupSerializer, TitleSerializer,
-                          TokenSerializer)
+                          TokenSerializer, MePostUserSerializer)
 
 User = get_user_model()
 
@@ -67,9 +68,10 @@ class AdminUserViewSet(viewsets.ModelViewSet):
     Вьюсет изменения данных о пользователях. Для админов.
     """
     queryset = User.objects.all()
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdmin]
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
+    lookup_field = 'username'
 
     def get_serializer_class(self):
 
@@ -83,20 +85,23 @@ class AdminUserViewSet(viewsets.ModelViewSet):
             return PatchUserSerializer
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    """
-    Вьюсет для получения данных о пользователях.
-    Для админов или модераторов.
-    """
-    queryset = User.objects.all()
-    permission_classes = [IsAuthorOrModeratorOrAdmin]
+class MeUserView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    def get_serializer_class(self):
+    def get(self, request):
+        serializer = GetUserSerializer(request.user)
+        return Response(serializer.data)
 
-        if self.action == 'list' or self.action == 'retrieve':
-            return GetUserSerializer
+    def patch(self, request):
+        serializer = MePostUserSerializer(
+            request.user,
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
 
-        return PostUserSerializer
+        return Response(serializer.data)
 
 
 class TokenViewSet(viewsets.ViewSet):
@@ -208,7 +213,7 @@ class GenreViewSet(
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdmin,)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -218,7 +223,7 @@ class TitleViewSet(viewsets.ModelViewSet):
         rating=Avg('reviews__score')
     ).select_related('category').prefetch_related('genre')
     serializer_class = TitleSerializer
-    permission_classes = (IsAdminOrReadOnly,)
+    permission_classes = (IsAdmin,)
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('category__slug', 'genre__slug', 'name', 'year')
     http_method_names = ['get', 'post', 'patch', 'delete']

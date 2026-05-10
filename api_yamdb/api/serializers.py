@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.core.validators import RegexValidator
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.relations import SlugRelatedField
@@ -12,8 +13,16 @@ class SignupSerializer(serializers.ModelSerializer):
     """
     Сериализатор регистрации пользователя.
     """
-    username = serializers.CharField(max_length=254, required=True)
-    email = serializers.EmailField(required=True)
+    username = serializers.CharField(
+        max_length=150,
+        required=True,
+        validators=[
+            RegexValidator(
+                regex=r'^[\w.@+-]+\Z',
+            )
+        ]
+    )
+    email = serializers.EmailField(max_length=254, required=True)
 
     class Meta:
         model = User
@@ -25,6 +34,19 @@ class SignupSerializer(serializers.ModelSerializer):
                 'Username не может быть "me"'
             )
         return value
+
+    def validate(self, data):
+        username = data.get('username')
+        email = data.get('email')
+
+        if (not User.objects.filter(username=username).exists()
+           and User.objects.filter(email=email).exists()
+           or User.objects.filter(username=username).exists()
+           and not User.objects.filter(email=email).exists()):
+
+            raise serializers.ValidationError('Username или email существует')
+
+        return data
 
 
 class GetUserSerializer(serializers.ModelSerializer):
@@ -48,7 +70,9 @@ class PostUserSerializer(serializers.ModelSerializer):
     """
     Сериализатор изменения пользовательских данных методом POST.
     """
-    email = serializers.EmailField(required=True)
+    email = serializers.EmailField(max_length=254, required=True)
+    last_name = serializers.CharField(max_length=150, required=False)
+    first_name = serializers.CharField(max_length=150, required=False)
 
     class Meta:
         model = User
@@ -84,6 +108,18 @@ class PatchUserSerializer(serializers.ModelSerializer):
             'bio',
             'role'
         )
+
+class MePostUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+        )
+        read_only_fields = ('role',)
 
 
 class TokenSerializer(serializers.ModelSerializer):
