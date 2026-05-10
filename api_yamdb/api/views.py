@@ -1,24 +1,26 @@
 import random
-from rest_framework.views import APIView
+
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import CharFilter, DjangoFilterBackend, FilterSet
-from .permissions import IsAdminOrReadOnly, IsAuthorOrModeratorOrAdmin
+from django_filters.rest_framework import (CharFilter, DjangoFilterBackend,
+                                           FilterSet)
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from reviews.models import Category, Genre, Review, Title
 
-from models.models import Category, Genre, Review, Title
 from .pagination import APIPagination
+from .permissions import IsAdmin, IsAdminOrReadOnly, IsAuthorOrModeratorOrAdmin
 from .serializers import (CategorySerializer, CommentSerializer,
                           GenreSerializer, GetUserSerializer,
-                          PatchUserSerializer, PostUserSerializer,
-                          ReviewSerializer, SignupSerializer, TitleSerializer,
-                          TokenSerializer, MePostUserSerializer)
+                          MePostUserSerializer, PatchUserSerializer,
+                          PostUserSerializer, ReviewSerializer,
+                          SignupSerializer, TitleSerializer, TokenSerializer)
 
 User = get_user_model()
 
@@ -71,6 +73,7 @@ class AdminUserViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
     lookup_field = 'username'
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
 
     def get_serializer_class(self):
 
@@ -82,6 +85,8 @@ class AdminUserViewSet(viewsets.ModelViewSet):
 
         if self.action == 'partial_update':
             return PatchUserSerializer
+ 
+        return GetUserSerializer
 
 
 class MeUserView(APIView):
@@ -232,9 +237,12 @@ class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет для произведений без PUT."""
 
     queryset = Title.objects.select_related(
-        'category').prefetch_related('genre')
+        'category').prefetch_related(
+            'genre').annotate(
+        rating=Avg('reviews__score')
+    )
     serializer_class = TitleSerializer
-    permission_classes = (IsAdmin,)
+    permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
     http_method_names = ['get', 'post', 'patch', 'delete']

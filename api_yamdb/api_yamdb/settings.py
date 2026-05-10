@@ -9,7 +9,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-AUTH_USER_MODEL = 'models.CustomUser'
+AUTH_USER_MODEL = 'reviews.CustomUser'
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
 
@@ -26,7 +26,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'api.apps.ApiConfig',
-    'models.apps.ModelsConfig'
+    'reviews.apps.ReviewsConfig'
 ]
 
 MIDDLEWARE = [
