@@ -137,6 +137,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = [IsAuthorOrModeratorOrAdmin]
     pagination_class = APIPagination
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_title(self):
         """Возвращает произведение по title_id из URL."""
@@ -159,6 +160,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = [IsAuthorOrModeratorOrAdmin]
     pagination_class = APIPagination
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
     def get_review(self):
         """Возвращает отзыв по review_id и title_id из URL."""
