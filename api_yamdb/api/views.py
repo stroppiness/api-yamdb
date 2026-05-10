@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
+from django_filters.rest_framework import CharFilter, DjangoFilterBackend, FilterSet
 from .permissions import IsAdminOrReadOnly, IsAuthorOrModeratorOrAdmin
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.filters import SearchFilter
@@ -194,7 +194,7 @@ class CategoryViewSet(
     filter_backends = (SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-    permission_classes = (IsAuthorOrModeratorOrAdmin,)
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class GenreViewSet(
@@ -213,14 +213,24 @@ class GenreViewSet(
     permission_classes = (IsAdminOrReadOnly,)
 
 
+class TitleFilter(FilterSet):
+    genre = CharFilter(field_name='genre__slug')
+    category = CharFilter(field_name='category__slug')
+    name = CharFilter(field_name='name', lookup_expr='contains')
+    year = CharFilter(field_name='year')
+
+    class Meta:
+        model = Title
+        fields = ('genre', 'category', 'name', 'year')
+
+
 class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет для произведений без PUT."""
 
-    queryset = Title.objects.annotate(
-        rating=Avg('reviews__score')
-    ).select_related('category').prefetch_related('genre')
+    queryset = Title.objects.select_related(
+        'category').prefetch_related('genre')
     serializer_class = TitleSerializer
     permission_classes = (IsAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('category__slug', 'genre__slug', 'name', 'year')
+    filterset_class = TitleFilter
     http_method_names = ['get', 'post', 'patch', 'delete']
