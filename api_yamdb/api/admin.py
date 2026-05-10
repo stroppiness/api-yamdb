@@ -4,6 +4,7 @@ from reviews.models import Category, Comment, Genre, Review, Title
 
 User = get_user_model()
 
+
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ('username', 'email', 'role')

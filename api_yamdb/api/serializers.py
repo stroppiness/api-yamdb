@@ -3,7 +3,6 @@ from datetime import date
 from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
 from rest_framework import serializers
-from rest_framework.relations import SlugRelatedField
 from reviews.models import Category, Comment, Genre, Review, Title
 
 User = get_user_model()
@@ -109,6 +108,7 @@ class PatchUserSerializer(serializers.ModelSerializer):
             'role'
         )
 
+
 class MePostUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -147,7 +147,10 @@ class ReviewSerializer(serializers.ModelSerializer):
         if request.method == 'POST':
             title = self.context['view'].get_title()
 
-            if Review.objects.filter(title=title, author=request.user).exists():
+            if Review.objects.filter(
+                title=title,
+                author=request.user
+            ).exists():
                 raise serializers.ValidationError('Вы уже оставили отзыв')
 
         return data

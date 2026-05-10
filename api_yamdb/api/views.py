@@ -85,7 +85,7 @@ class AdminUserViewSet(viewsets.ModelViewSet):
 
         if self.action == 'partial_update':
             return PatchUserSerializer
- 
+
         return GetUserSerializer
 
 
