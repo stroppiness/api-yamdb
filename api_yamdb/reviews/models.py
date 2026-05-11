@@ -115,7 +115,7 @@ class Review(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL,
                                on_delete=models.CASCADE,
                                verbose_name='Автор отзыва')
-    score = models.IntegerField(
+    score = models.PositiveSmallIntegerField(
         'Оценка',
         validators=[MinValueValidator(1), MaxValueValidator(10)]
     )
