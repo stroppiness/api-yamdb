@@ -1,11 +1,10 @@
 from datetime import date
 
-from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
+from django.db.models import Q
 from rest_framework import serializers
-from reviews.models import Category, Comment, Genre, Review, Title
 
-User = get_user_model()
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -38,10 +37,10 @@ class SignupSerializer(serializers.ModelSerializer):
         username = data.get('username')
         email = data.get('email')
 
-        if (not User.objects.filter(username=username).exists()
-           and User.objects.filter(email=email).exists()
-           or User.objects.filter(username=username).exists()
-           and not User.objects.filter(email=email).exists()):
+        if User.objects.filter(
+            Q(username=username) & ~Q(email=email)
+            | ~Q(username=username) & Q(email=email)
+        ).exists():
 
             raise serializers.ValidationError('Username или email существует')
 

@@ -6,9 +6,9 @@ from .views import (AdminUserViewSet, CategoryViewSet, CommentViewSet,
                     SelfRegistrationViewSet, TitleViewSet, TokenViewSet)
 
 router = DefaultRouter()
-router.register(r'auth/signup', SelfRegistrationViewSet, basename='signup')
+router.register('auth/signup', SelfRegistrationViewSet, basename='signup')
 router.register('users', AdminUserViewSet)
-router.register(r'auth/token', TokenViewSet, basename='token')
+router.register('auth/token', TokenViewSet, basename='token')
 router.register('categories', CategoryViewSet)
 router.register('genres', GenreViewSet)
 router.register('titles', TitleViewSet)
@@ -24,6 +24,6 @@ router.register(
 )
 
 urlpatterns = [
-    path("users/me/", MeUserView.as_view()),
+    path('users/me/', MeUserView.as_view()),
     path('', include(router.urls)),
 ]

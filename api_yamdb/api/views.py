@@ -1,6 +1,5 @@
 import random
 
-from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
@@ -12,7 +11,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from reviews.models import Category, Genre, Review, Title
+
+from reviews.models import Category, Genre, Review, Title, User
 
 from .pagination import APIPagination
 from .permissions import IsAdmin, IsAdminOrReadOnly, IsAuthorOrModeratorOrAdmin
@@ -21,8 +21,6 @@ from .serializers import (CategorySerializer, CommentSerializer,
                           MePostUserSerializer, PatchUserSerializer,
                           PostUserSerializer, ReviewSerializer,
                           SignupSerializer, TitleSerializer, TokenSerializer)
-
-User = get_user_model()
 
 
 class SelfRegistrationViewSet(viewsets.ViewSet):

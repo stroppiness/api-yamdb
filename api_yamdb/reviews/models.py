@@ -1,32 +1,11 @@
-from api.constants import COMMENT_PREVIEW_LENGTH, REVIEW_PREVIEW_LENGTH
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from api.constants import COMMENT_PREVIEW_LENGTH, REVIEW_PREVIEW_LENGTH
 
-class CustomUser(AbstractUser):
-
-    ROLES = (
-        ('user', 'User'),
-        ('moderator', 'Moderator'),
-        ('admin', 'Admin'),
-    )
-
-    bio = models.TextField('Биография', blank=True, null=True)
-    role = models.CharField(
-        'Роль', max_length=15,
-        choices=ROLES,
-        default='user',
-    )
-    confirmation_code = models.CharField(max_length=6, blank=True)
-
-    class Meta:
-        verbose_name = 'пользователь'
-        verbose_name_plural = 'Пользователи'
-
-    def __str__(self):
-        return self.username
+User = get_user_model()
 
 
 class Category(models.Model):
