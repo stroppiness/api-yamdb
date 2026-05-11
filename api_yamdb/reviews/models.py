@@ -1,41 +1,22 @@
-from api.constants import COMMENT_PREVIEW_LENGTH, REVIEW_PREVIEW_LENGTH
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from api.constants import (COMMENT_PREVIEW_LENGTH, MAX_LENGTH_NAME,
+                           MAX_LENGTH_SLUG, REVIEW_PREVIEW_LENGTH)
+from api.validators import validate_year
 
-class CustomUser(AbstractUser):
-
-    ROLES = (
-        ('user', 'User'),
-        ('moderator', 'Moderator'),
-        ('admin', 'Admin'),
-    )
-
-    bio = models.TextField('Биография', blank=True, null=True)
-    role = models.CharField(
-        'Роль', max_length=15,
-        choices=ROLES,
-        default='user',
-    )
-    confirmation_code = models.CharField(max_length=6, blank=True)
-
-    class Meta:
-        verbose_name = 'пользователь'
-        verbose_name_plural = 'Пользователи'
-
-    def __str__(self):
-        return self.username
+User = get_user_model()
 
 
 class Category(models.Model):
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name='Название'
     )
     slug = models.SlugField(
-        max_length=50,
+        max_length=MAX_LENGTH_SLUG,
         unique=True,
         verbose_name='Слаг'
     )
@@ -51,11 +32,11 @@ class Category(models.Model):
 
 class Genre(models.Model):
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name='Название'
     )
     slug = models.SlugField(
-        max_length=50,
+        max_length=MAX_LENGTH_SLUG,
         unique=True,
         verbose_name='Слаг'
     )
@@ -71,11 +52,11 @@ class Genre(models.Model):
 
 class Title(models.Model):
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name='Название'
     )
-    year = models.IntegerField(
-        validators=[MaxValueValidator(9999)],
+    year = models.PositiveSmallIntegerField(
+        validators=[validate_year],
         verbose_name='Год'
     )
     description = models.TextField(
@@ -115,7 +96,7 @@ class Review(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL,
                                on_delete=models.CASCADE,
                                verbose_name='Автор отзыва')
-    score = models.IntegerField(
+    score = models.PositiveSmallIntegerField(
         'Оценка',
         validators=[MinValueValidator(1), MaxValueValidator(10)]
     )

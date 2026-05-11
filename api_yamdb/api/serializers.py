@@ -1,11 +1,10 @@
 from datetime import date
 
-from django.contrib.auth import get_user_model
 from django.core.validators import RegexValidator
+from django.db.models import Q
 from rest_framework import serializers
-from reviews.models import Category, Comment, Genre, Review, Title
 
-User = get_user_model()
+from reviews.models import Category, Comment, Genre, Review, Title, User
 
 
 class SignupSerializer(serializers.ModelSerializer):
@@ -38,10 +37,10 @@ class SignupSerializer(serializers.ModelSerializer):
         username = data.get('username')
         email = data.get('email')
 
-        if (not User.objects.filter(username=username).exists()
-           and User.objects.filter(email=email).exists()
-           or User.objects.filter(username=username).exists()
-           and not User.objects.filter(email=email).exists()):
+        if User.objects.filter(
+            Q(username=username) & ~Q(email=email)
+            | ~Q(username=username) & Q(email=email)
+        ).exists():
 
             raise serializers.ValidationError('Username или email существует')
 
@@ -177,7 +176,25 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = ('name', 'slug')
 
 
-class TitleSerializer(serializers.ModelSerializer):
+class TitleReadSerializer(serializers.ModelSerializer):
+    """Сериализатор для чтения произведений."""
+
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(many=True, read_only=True)
+    rating = serializers.IntegerField(read_only=True, default=None)
+
+    class Meta:
+        model = Title
+        fields = (
+            'id', 'name', 'year', 'rating',
+            'description', 'genre', 'category'
+        )
+        read_only_fields = fields
+
+
+class TitleWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для создания и обновления произведений."""
+
     category = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Category.objects.all()
@@ -185,7 +202,8 @@ class TitleSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
         slug_field='slug',
         queryset=Genre.objects.all(),
-        many=True
+        many=True,
+        allow_empty=False
     )
     rating = serializers.IntegerField(read_only=True, default=None)
 
@@ -195,13 +213,7 @@ class TitleSerializer(serializers.ModelSerializer):
             'id', 'name', 'year', 'rating',
             'description', 'genre', 'category'
         )
-
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['category'] = CategorySerializer(instance.category).data
-        representation['genre'] = GenreSerializer(instance.genre.all(),
-                                                  many=True).data
-        return representation
+        read_only_fields = ('id', 'rating')
 
     def validate_year(self, value):
         if value > date.today().year:
