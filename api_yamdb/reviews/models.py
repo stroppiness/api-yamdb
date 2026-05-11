@@ -3,18 +3,24 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from api.constants import COMMENT_PREVIEW_LENGTH, REVIEW_PREVIEW_LENGTH
+from api.constants import (
+    COMMENT_PREVIEW_LENGTH,
+    MAX_LENGTH_NAME,
+    MAX_LENGTH_SLUG,
+    REVIEW_PREVIEW_LENGTH,
+)
+from api.validators import validate_year
 
 User = get_user_model()
 
 
 class Category(models.Model):
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name='Название'
     )
     slug = models.SlugField(
-        max_length=50,
+        max_length=MAX_LENGTH_SLUG,
         unique=True,
         verbose_name='Слаг'
     )
@@ -30,11 +36,11 @@ class Category(models.Model):
 
 class Genre(models.Model):
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name='Название'
     )
     slug = models.SlugField(
-        max_length=50,
+        max_length=MAX_LENGTH_SLUG,
         unique=True,
         verbose_name='Слаг'
     )
@@ -50,11 +56,11 @@ class Genre(models.Model):
 
 class Title(models.Model):
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_LENGTH_NAME,
         verbose_name='Название'
     )
-    year = models.IntegerField(
-        validators=[MaxValueValidator(9999)],
+    year = models.PositiveSmallIntegerField(
+        validators=[validate_year],
         verbose_name='Год'
     )
     description = models.TextField(
