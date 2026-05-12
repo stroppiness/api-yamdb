@@ -55,7 +55,7 @@ class Title(models.Model):
         max_length=MAX_LENGTH_NAME,
         verbose_name='Название'
     )
-    year = models.PositiveSmallIntegerField(
+    year = models.SmallIntegerField(
         validators=[validate_year],
         verbose_name='Год'
     )
