@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from api.constants import CONFIRMATION_MAX_LENGTH
+
 
 class CustomUser(AbstractUser):
 
@@ -14,15 +16,20 @@ class CustomUser(AbstractUser):
         (ADMIN, 'Admin'),
     )
 
-    MAX_ROLE_LENGTH = max(len(value) for value, _ in ROLES)
-
     bio = models.TextField('Биография', blank=True, null=True)
     role = models.CharField(
-        'Роль', max_length=MAX_ROLE_LENGTH,
+        'Роль', max_length=max(len(value) for value, _ in ROLES),
         choices=ROLES,
         default='user',
     )
-    confirmation_code = models.CharField(max_length=6, blank=True)
+    confirmation_code = models.CharField(max_length=CONFIRMATION_MAX_LENGTH, blank=True)
+
+    class Meta:
+        verbose_name = 'пользователь'
+        verbose_name_plural = 'Пользователи'
+
+    def __str__(self):
+        return self.username
 
     @property
     def is_user(self):
@@ -35,10 +42,3 @@ class CustomUser(AbstractUser):
     @property
     def is_admin(self):
         return self.role == self.ADMIN
-
-    class Meta:
-        verbose_name = 'пользователь'
-        verbose_name_plural = 'Пользователи'
-
-    def __str__(self):
-        return self.username
